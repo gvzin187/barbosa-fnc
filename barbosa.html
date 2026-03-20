@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>BARBOSA FNC</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0a0f1c;
+    color: white;
+    text-align: center;
+}
+
+h1 { color: gold; }
+
+.container {
+    max-width: 500px;
+    margin: auto;
+}
+
+input, button {
+    width: 90%;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    background: gold;
+    font-weight: bold;
+}
+
+.card {
+    background: #111827;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 10px;
+    text-align: left;
+}
+</style>
+</head>
+
+<body>
+
+<div id="login">
+<h1>BARBOSA FNC 🔐</h1>
+<input id="email" placeholder="Email">
+<input id="senha" type="password" placeholder="Senha">
+<button onclick="entrar()">Entrar</button>
+<button onclick="cadastrar()">Criar Conta</button>
+</div>
+
+<div id="app" style="display:none;">
+<div class="container">
+
+<h1>BARBOSA FNC 💰</h1>
+
+<p>Total: R$ <span id="total">0</span></p>
+<p>Lucro: R$ <span id="lucro">0</span></p>
+
+<input id="nome" placeholder="Nome">
+<input id="valor" type="number" placeholder="Valor">
+<input id="parcelas" type="number" placeholder="Parcelas">
+
+<button onclick="add()">Adicionar</button>
+
+<div id="lista"></div>
+
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB6lNPw93aSfEsIfokTKMMQ2YHoQnHr8R0",
+  authDomain: "barbosa-fnc.firebaseapp.com",
+  projectId: "barbosa-fnc",
+  storageBucket: "barbosa-fnc.firebasestorage.app",
+  messagingSenderId: "1028886954543",
+  appId: "1:1028886954543:web:6c184434ba5406bfdf3cda"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+window.cadastrar = async () => {
+    await createUserWithEmailAndPassword(auth, email.value, senha.value);
+    alert("Conta criada");
+};
+
+window.entrar = async () => {
+    await signInWithEmailAndPassword(auth, email.value, senha.value);
+    login.style.display = "none";
+    app.style.display = "block";
+    carregar();
+};
+
+window.add = async () => {
+    let total = valor.value * 1.25;
+
+    await addDoc(collection(db, "emprestimos"), {
+        nome: nome.value,
+        valor: parseFloat(valor.value),
+        total,
+        parcelas: parseInt(parcelas.value)
+    });
+
+    carregar();
+};
+
+async function carregar() {
+    let snapshot = await getDocs(collection(db, "emprestimos"));
+
+    let lista = document.getElementById("lista");
+    lista.innerHTML = "";
+
+    let total = 0, lucro = 0;
+
+    snapshot.forEach(doc => {
+        let d = doc.data();
+
+        total += d.valor;
+        lucro += (d.total - d.valor);
+
+        lista.innerHTML += `
+        <div class="card">
+        ${d.nome}<br>
+        R$ ${d.valor} → ${d.total}<br>
+        Parcelas: ${d.parcelas}
+        </div>`;
+    });
+
+    document.getElementById("total").innerText = total.toFixed(2);
+    document.getElementById("lucro").innerText = lucro.toFixed(2);
+}
+</script>
+
+</body>
+</html>
